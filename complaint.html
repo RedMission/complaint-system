@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我要投诉 - 二维码投诉举报平台</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#3b82f6',
+                        accent: '#60a5fa',
+                        light: '#f3f4f6',
+                        dark: '#1f2937'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .form-input-focus {
+                @apply focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none;
+            }
+            .step-active {
+                @apply bg-primary text-white;
+            }
+            .step-completed {
+                @apply bg-green-500 text-white;
+            }
+            .step-pending {
+                @apply bg-gray-200 text-gray-500;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 导航栏 -->
+    <nav class="bg-primary text-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-gavel text-2xl"></i>
+                <span class="text-xl font-bold">二维码投诉举报平台</span>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="index.html" class="hover:text-accent transition-colors duration-200">首页</a>
+                <a href="complaint.html" class="hover:text-accent transition-colors duration-200 font-medium">我要投诉</a>
+                <a href="query.html" class="hover:text-accent transition-colors duration-200">投诉查询</a>
+                <a href="admin/login.html" class="hover:text-accent transition-colors duration-200">后台管理</a>
+            </div>
+            <button class="md:hidden focus:outline-none" id="mobile-menu-button">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </div>
+        <!-- 移动端菜单 -->
+        <div class="md:hidden hidden bg-primary" id="mobile-menu">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-2">
+                <a href="index.html" class="block py-2 hover:text-accent transition-colors duration-200">首页</a>
+                <a href="complaint.html" class="block py-2 hover:text-accent transition-colors duration-200">我要投诉</a>
+                <a href="query.html" class="block py-2 hover:text-accent transition-colors duration-200">投诉查询</a>
+                <a href="admin/login.html" class="block py-2 hover:text-accent transition-colors duration-200">后台管理</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面标题 -->
+    <header class="bg-gradient-to-r from-primary to-secondary text-white py-8">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl font-bold">我要投诉</h1>
+            <p class="mt-2">请填写以下表单提交您的投诉或举报信息</p>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 步骤指示器 -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="flex justify-between relative">
+                <!-- 连接线 -->
+                <div class="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 z-0"></div>
+                
+                <!-- 步骤1 -->
+                <div class="flex flex-col items-center relative z-10">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center step-active" id="step-1-circle">
+                        <span>1</span>
+                    </div>
+                    <span class="mt-2 text-sm font-medium" id="step-1-text">基本信息</span>
+                </div>
+                
+                <!-- 步骤2 -->
+                <div class="flex flex-col items-center relative z-10">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center step-pending" id="step-2-circle">
+                        <span>2</span>
+                    </div>
+                    <span class="mt-2 text-sm font-medium" id="step-2-text">投诉详情</span>
+                </div>
+                
+                <!-- 步骤3 -->
+                <div class="flex flex-col items-center relative z-10">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center step-pending" id="step-3-circle">
+                        <span>3</span>
+                    </div>
+                    <span class="mt-2 text-sm font-medium" id="step-3-text">证据上传</span>
+                </div>
+                
+                <!-- 步骤4 -->
+                <div class="flex flex-col items-center relative z-10">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center step-pending" id="step-4-circle">
+                        <span>4</span>
+                    </div>
+                    <span class="mt-2 text-sm font-medium" id="step-4-text">提交确认</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表单容器 -->
+        <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
+            <!-- 步骤1：基本信息 -->
+            <div class="step-content" id="step-1-content">
+                <h2 class="text-2xl font-bold mb-6 text-primary">基本信息</h2>
+                <form id="complaint-form">
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                        <label for="complaint-type" class="block text-gray-700 font-medium mb-2">投诉类型 <span class="text-red-500">*</span></label>
+                        <select id="complaint-type" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input-focus" required>
+                            <option value="">请选择投诉类型</option>
+                            <!-- 分类选项将通过JavaScript动态生成 -->
+                        </select>
+                    </div>
+                        <div>
+                            <label for="complaint-location" class="block text-gray-700 font-medium mb-2">投诉地点 <span class="text-red-500">*</span></label>
+                            <input type="text" id="complaint-location" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input-focus" placeholder="请输入详细地址" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label for="contact-name" class="block text-gray-700 font-medium mb-2">联系人姓名 <span class="text-red-500">*</span></label>
+                        <input type="text" id="contact-name" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input-focus" placeholder="请输入您的姓名" required>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="contact-phone" class="block text-gray-700 font-medium mb-2">联系电话 <span class="text-red-500">*</span></label>
+                            <input type="tel" id="contact-phone" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input-focus" placeholder="请输入您的手机号码" required>
+                        </div>
+                        <div>
+                            <label for="contact-email" class="block text-gray-700 font-medium mb-2">电子邮箱</label>
+                            <input type="email" id="contact-email" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input-focus" placeholder="请输入您的电子邮箱（选填）">
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="button" class="next-step bg-primary text-white font-medium py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center" data-step="1">
+                            下一步 <i class="fa fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- 步骤2：投诉详情 -->
+            <div class="step-content hidden" id="step-2-content">
+                <h2 class="text-2xl font-bold mb-6 text-primary">投诉详情</h2>
+                <div class="mb-6">
+                    <label for="complaint-title" class="block text-gray-700 font-medium mb-2">投诉标题 <span class="text-red-500">*</span></label>
+                    <input type="text" id="complaint-title" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input-focus" placeholder="请简要描述投诉事项（不超过50字）" required>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="complaint-description" class="block text-gray-700 font-medium mb-2">投诉内容 <span class="text-red-500">*</span></label>
+                    <textarea id="complaint-description" rows="6" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input-focus" placeholder="请详细描述投诉事项，包括事件经过、影响等（不超过1000字）" required></textarea>
+                    <div class="text-right text-gray-500 text-sm mt-1"><span id="description-count">0</span>/1000</div>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="complaint-demand" class="block text-gray-700 font-medium mb-2">投诉诉求</label>
+                    <textarea id="complaint-demand" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input-focus" placeholder="请说明您希望达成的解决方案或诉求（不超过500字）"></textarea>
+                    <div class="text-right text-gray-500 text-sm mt-1"><span id="demand-count">0</span>/500</div>
+                </div>
+                
+                <div class="flex justify-between">
+                    <button type="button" class="prev-step bg-gray-300 text-gray-700 font-medium py-2 px-6 rounded-lg hover:bg-gray-400 transition duration-300 flex items-center" data-step="2">
+                        <i class="fa fa-arrow-left mr-2"></i> 上一步
+                    </button>
+                    <button type="button" class="next-step bg-primary text-white font-medium py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center" data-step="2">
+                        下一步 <i class="fa fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 步骤3：证据上传 -->
+            <div class="step-content hidden" id="step-3-content">
+                <h2 class="text-2xl font-bold mb-6 text-primary">证据上传</h2>
+                <div class="mb-6">
+                    <p class="text-gray-700 mb-4">请上传与投诉事项相关的证据材料，如照片、视频、文件等。支持JPG、PNG、PDF格式，单个文件大小不超过5MB，最多可上传5个文件。</p>
+                    
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center" id="upload-area">
+                        <i class="fa fa-cloud-upload text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500 mb-2">点击或拖拽文件到此处上传</p>
+                        <p class="text-gray-400 text-sm">支持JPG、PNG、PDF格式，单个文件不超过5MB</p>
+                        <input type="file" id="file-upload" class="hidden" multiple accept=".jpg,.jpeg,.png,.pdf">
+                        <button type="button" id="upload-button" class="mt-4 bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg hover:bg-gray-300 transition duration-300">
+                            选择文件
+                        </button>
+                    </div>
+                    
+                    <div class="mt-4" id="file-list">
+                        <!-- 上传的文件列表将显示在这里 -->
+                    </div>
+                </div>
+                
+                <div class="flex justify-between">
+                    <button type="button" class="prev-step bg-gray-300 text-gray-700 font-medium py-2 px-6 rounded-lg hover:bg-gray-400 transition duration-300 flex items-center" data-step="3">
+                        <i class="fa fa-arrow-left mr-2"></i> 上一步
+                    </button>
+                    <button type="button" class="next-step bg-primary text-white font-medium py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center" data-step="3">
+                        下一步 <i class="fa fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 步骤4：提交确认 -->
+            <div class="step-content hidden" id="step-4-content">
+                <h2 class="text-2xl font-bold mb-6 text-primary">提交确认</h2>
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <h3 class="font-medium text-lg mb-4">投诉信息确认</h3>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-3">
+                            <span class="text-gray-600">投诉类型：</span>
+                            <span class="col-span-2 font-medium" id="confirm-type">-</span>
+                        </div>
+                        <div class="grid grid-cols-3">
+                            <span class="text-gray-600">投诉地点：</span>
+                            <span class="col-span-2 font-medium" id="confirm-location">-</span>
+                        </div>
+                        <div class="grid grid-cols-3">
+                            <span class="text-gray-600">联系人：</span>
+                            <span class="col-span-2 font-medium" id="confirm-name">-</span>
+                        </div>
+                        <div class="grid grid-cols-3">
+                            <span class="text-gray-600">联系电话：</span>
+                            <span class="col-span-2 font-medium" id="confirm-phone">-</span>
+                        </div>
+                        <div class="grid grid-cols-3">
+                            <span class="text-gray-600">投诉标题：</span>
+                            <span class="col-span-2 font-medium" id="confirm-title">-</span>
+                        </div>
+                        <div class="grid grid-cols-3">
+                            <span class="text-gray-600">投诉内容：</span>
+                            <span class="col-span-2 font-medium" id="confirm-description">-</span>
+                        </div>
+                        <div class="grid grid-cols-3" id="confirm-demand-container">
+                            <span class="text-gray-600">投诉诉求：</span>
+                            <span class="col-span-2 font-medium" id="confirm-demand">-</span>
+                        </div>
+                        <div class="grid grid-cols-3" id="confirm-files-container">
+                            <span class="text-gray-600">上传文件：</span>
+                            <span class="col-span-2 font-medium" id="confirm-files">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input id="agreement" type="checkbox" class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary" required>
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="agreement" class="text-gray-600">我已阅读并同意<a href="#" class="text-primary hover:underline">《投诉举报须知》</a>，保证所提供的信息真实有效，如有虚假愿承担相应法律责任。</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between">
+                    <button type="button" class="prev-step bg-gray-300 text-gray-700 font-medium py-2 px-6 rounded-lg hover:bg-gray-400 transition duration-300 flex items-center" data-step="4">
+                        <i class="fa fa-arrow-left mr-2"></i> 上一步
+                    </button>
+                    <button type="button" id="submit-complaint" class="bg-primary text-white font-medium py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center">
+                        提交投诉 <i class="fa fa-check ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 提交成功弹窗 -->
+    <div class="fixed inset-0 flex items-center justify-center z-50 hidden" id="success-modal">
+        <div class="absolute inset-0 bg-black bg-opacity-50" id="modal-overlay"></div>
+        <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full relative z-10">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa fa-check text-green-500 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">投诉提交成功</h3>
+                <p class="text-gray-600 mb-6">您的投诉已成功提交，投诉编号：<span class="font-bold text-primary" id="complaint-id">CS202507210001</span></p>
+                <p class="text-gray-600 mb-6">请妥善保管此编号，用于查询投诉处理进度。</p>
+                <div class="flex flex-col space-y-3">
+                    <button id="view-detail" class="bg-primary text-white font-medium py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300">
+                        查看详情
+                    </button>
+                    <button id="close-modal" class="bg-gray-200 text-gray-700 font-medium py-2 px-6 rounded-lg hover:bg-gray-300 transition duration-300">
+                        返回首页
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-8 mt-16">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">关于我们</h3>
+                    <p class="text-gray-400">二维码投诉举报平台致力于为市民提供便捷、高效的投诉渠道，促进社会治理水平提升。</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">联系方式</h3>
+                    <ul class="text-gray-400 space-y-2">
+                        <li class="flex items-center">
+                            <i class="fa fa-phone mr-2"></i> 服务热线：12345
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-envelope mr-2"></i> 邮箱：service@complaint.gov.cn
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-map-marker mr-2"></i> 地址：某某市政务服务中心
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">关注我们</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-white hover:text-accent transition-colors duration-200">
+                            <i class="fa fa-weixin text-2xl"></i>
+                        </a>
+                        <a href="#" class="text-white hover:text-accent transition-colors duration-200">
+                            <i class="fa fa-weibo text-2xl"></i>
+                        </a>
+                        <a href="#" class="text-white hover:text-accent transition-colors duration-200">
+                            <i class="fa fa-qq text-2xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>&copy; 2025 二维码投诉举报平台 版权所有</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 移动端菜单切换
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // 加载投诉类型
+        function loadComplaintTypes() {
+            // 从本地存储获取分类数据
+            let categories = JSON.parse(localStorage.getItem('categories')) || [];
+            
+            // 如果没有分类数据，使用默认分类
+            if (categories.length === 0) {
+                categories = [
+                    { id: 1, name: '环境保护', key: 'environmental', status: 'active' },
+                    { id: 2, name: '噪音污染', key: 'noise', status: 'active' },
+                    { id: 3, name: '交通出行', key: 'traffic', status: 'active' },
+                    { id: 4, name: '社区管理', key: 'community', status: 'active' },
+                    { id: 5, name: '服务质量', key: 'service', status: 'active' },
+                    { id: 6, name: '公共设施', key: 'facility', status: 'active' },
+                    { id: 7, name: '其他问题', key: 'other', status: 'active' },
+                    { id: 8, name: '未分类', key: 'uncategorized', status: 'active' }
+                ];
+                localStorage.setItem('categories', JSON.stringify(categories));
+            }
+            
+            // 过滤出激活状态的分类，排除未分类选项
+            const activeCategories = categories.filter(c => c.status === 'active' && c.key !== 'uncategorized');
+            
+            // 生成分类选项
+            const selectElement = document.getElementById('complaint-type');
+            selectElement.innerHTML = '<option value="">请选择投诉类型</option>';
+            
+            activeCategories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.key;
+                option.textContent = category.name;
+                selectElement.appendChild(option);
+            });
+        }
+
+        // 步骤切换
+        document.querySelectorAll('.next-step').forEach(button => {
+            button.addEventListener('click', function() {
+                const currentStep = parseInt(this.getAttribute('data-step'));
+                const nextStep = currentStep + 1;
+                
+                // 验证当前步骤
+                if (validateStep(currentStep)) {
+                    // 隐藏当前步骤内容
+                    document.getElementById(`step-${currentStep}-content`).classList.add('hidden');
+                    
+                    // 显示下一步内容
+                    document.getElementById(`step-${nextStep}-content`).classList.remove('hidden');
+                    
+                    // 更新步骤指示器
+                    document.getElementById(`step-${currentStep}-circle`).classList.remove('step-active');
+                    document.getElementById(`step-${currentStep}-circle`).classList.add('step-completed');
+                    document.getElementById(`step-${currentStep}-circle`).innerHTML = '<i class="fa fa-check"></i>';
+                    
+                    document.getElementById(`step-${nextStep}-circle`).classList.remove('step-pending');
+                    document.getElementById(`step-${nextStep}-circle`).classList.add('step-active');
+                    
+                    // 如果是最后一步，填充确认信息
+                    if (nextStep === 4) {
+                        fillConfirmationInfo();
+                    }
+                }
+            });
+        });
+        
+        document.querySelectorAll('.prev-step').forEach(button => {
+            button.addEventListener('click', function() {
+                const currentStep = parseInt(this.getAttribute('data-step'));
+                const prevStep = currentStep - 1;
+                
+                // 隐藏当前步骤内容
+                document.getElementById(`step-${currentStep}-content`).classList.add('hidden');
+                
+                // 显示上一步内容
+                document.getElementById(`step-${prevStep}-content`).classList.remove('hidden');
+                
+                // 更新步骤指示器
+                document.getElementById(`step-${currentStep}-circle`).classList.remove('step-active');
+                document.getElementById(`step-${currentStep}-circle`).classList.add('step-pending');
+                document.getElementById(`step-${currentStep}-circle`).innerHTML = `<span>${currentStep}</span>`;
+                
+                document.getElementById(`step-${prevStep}-circle`).classList.remove('step-completed');
+                document.getElementById(`step-${prevStep}-circle`).classList.add('step-active');
+                document.getElementById(`step-${prevStep}-circle`).innerHTML = `<span>${prevStep}</span>`;
+            });
+        });
+        
+        // 验证步骤
+        function validateStep(step) {
+            switch (step) {
+                case 1:
+                    const type = document.getElementById('complaint-type').value;
+                    const location = document.getElementById('complaint-location').value;
+                    const name = document.getElementById('contact-name').value;
+                    const phone = document.getElementById('contact-phone').value;
+                    
+                    if (!type || !location || !name || !phone) {
+                        alert('请填写所有必填项');
+                        return false;
+                    }
+                    
+                    // 验证手机号
+                    const phoneRegex = /^1[3-9]\d{9}$/;
+                    if (!phoneRegex.test(phone)) {
+                        alert('请输入正确的手机号码');
+                        return false;
+                    }
+                    
+                    return true;
+                    
+                case 2:
+                    const title = document.getElementById('complaint-title').value;
+                    const description = document.getElementById('complaint-description').value;
+                    
+                    if (!title || !description) {
+                        alert('请填写投诉标题和内容');
+                        return false;
+                    }
+                    
+                    return true;
+                    
+                case 3:
+                    // 文件上传非必填，直接通过
+                    return true;
+                    
+                default:
+                    return true;
+            }
+        }
+        
+        // 字符计数
+        document.getElementById('complaint-description').addEventListener('input', function() {
+            const count = this.value.length;
+            document.getElementById('description-count').textContent = count;
+            
+            if (count > 1000) {
+                document.getElementById('description-count').classList.add('text-red-500');
+                this.value = this.value.substring(0, 1000);
+                document.getElementById('description-count').textContent = 1000;
+            } else {
+                document.getElementById('description-count').classList.remove('text-red-500');
+            }
+        });
+        
+        document.getElementById('complaint-demand').addEventListener('input', function() {
+            const count = this.value.length;
+            document.getElementById('demand-count').textContent = count;
+            
+            if (count > 500) {
+                document.getElementById('demand-count').classList.add('text-red-500');
+                this.value = this.value.substring(0, 500);
+                document.getElementById('demand-count').textContent = 500;
+            } else {
+                document.getElementById('demand-count').classList.remove('text-red-500');
+            }
+        });
+        
+        // 文件上传
+        document.getElementById('upload-button').addEventListener('click', function() {
+            document.getElementById('file-upload').click();
+        });
+        
+        document.getElementById('upload-area').addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('border-primary');
+        });
+        
+        document.getElementById('upload-area').addEventListener('dragleave', function() {
+            this.classList.remove('border-primary');
+        });
+        
+        document.getElementById('upload-area').addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('border-primary');
+            
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+        
+        document.getElementById('file-upload').addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+        
+        // 处理上传的文件
+        let uploadedFiles = [];
+        
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            // 检查文件数量
+            if (uploadedFiles.length + files.length > 5) {
+                alert('最多只能上传5个文件');
+                return;
+            }
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // 检查文件类型
+                if (!file.type.match('image/jpeg') && !file.type.match('image/png') && !file.type.match('application/pdf')) {
+                    alert('只支持JPG、PNG和PDF格式的文件');
+                    continue;
+                }
+                
+                // 检查文件大小
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('文件大小不能超过5MB');
+                    continue;
+                }
+                
+                // 添加到上传文件列表
+                uploadedFiles.push(file);
+                
+                // 创建文件预览
+                const fileItem = document.createElement('div');
+                fileItem.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg mb-2';
+                fileItem.setAttribute('data-index', uploadedFiles.length - 1);
+                
+                let fileIcon = '';
+                if (file.type.match('image/jpeg') || file.type.match('image/png')) {
+                    fileIcon = '<i class="fa fa-file-image-o text-primary"></i>';
+                } else if (file.type.match('application/pdf')) {
+                    fileIcon = '<i class="fa fa-file-pdf-o text-red-500"></i>';
+                }
+                
+                fileItem.innerHTML = `
+                    <div class="flex items-center">
+                        ${fileIcon}
+                        <span class="ml-2 text-gray-700 truncate max-w-xs">${file.name}</span>
+                        <span class="ml-2 text-gray-500 text-sm">${(file.size / 1024).toFixed(1)}KB</span>
+                    </div>
+                    <button type="button" class="delete-file text-gray-400 hover:text-red-500">
+                        <i class="fa fa-times"></i>
+                    </button>
+                `;
+                
+                document.getElementById('file-list').appendChild(fileItem);
+            }
+            
+            // 添加删除文件事件
+            document.querySelectorAll('.delete-file').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt(this.closest('.flex.items-center.justify-between').getAttribute('data-index'));
+                    uploadedFiles.splice(index, 1);
+                    this.closest('.flex.items-center.justify-between').remove();
+                    
+                    // 更新剩余文件的索引
+                    document.querySelectorAll('#file-list > div').forEach((item, idx) => {
+                        item.setAttribute('data-index', idx);
+                    });
+                });
+            });
+        }
+        
+        // 填充确认信息
+        function fillConfirmationInfo() {
+            document.getElementById('confirm-type').textContent = document.getElementById('complaint-type').options[document.getElementById('complaint-type').selectedIndex].text;
+            document.getElementById('confirm-location').textContent = document.getElementById('complaint-location').value;
+            document.getElementById('confirm-name').textContent = document.getElementById('contact-name').value;
+            document.getElementById('confirm-phone').textContent = document.getElementById('contact-phone').value;
+            document.getElementById('confirm-title').textContent = document.getElementById('complaint-title').value;
+            document.getElementById('confirm-description').textContent = document.getElementById('complaint-description').value;
+            
+            const demand = document.getElementById('complaint-demand').value;
+            if (demand) {
+                document.getElementById('confirm-demand').textContent = demand;
+                document.getElementById('confirm-demand-container').classList.remove('hidden');
+            } else {
+                document.getElementById('confirm-demand-container').classList.add('hidden');
+            }
+            
+            if (uploadedFiles.length > 0) {
+                document.getElementById('confirm-files').textContent = `${uploadedFiles.length}个文件`;
+                document.getElementById('confirm-files-container').classList.remove('hidden');
+            } else {
+                document.getElementById('confirm-files-container').classList.add('hidden');
+            }
+        }
+        
+        // 提交表单
+        function submitForm() {
+            // 验证协议勾选
+            if (!document.getElementById('agreement').checked) {
+                alert('请阅读并同意投诉举报须知');
+                return;
+            }
+            
+            // 生成投诉编号
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+            const complaintId = `CS${year}${month}${day}${random}`;
+            
+            document.getElementById('complaint-id').textContent = complaintId;
+            
+            // 保存投诉数据到本地存储
+            saveComplaintData(complaintId);
+            
+            // 显示成功弹窗
+            document.getElementById('success-modal').classList.remove('hidden');
+        }
+        
+        // 为表单添加提交事件监听器
+        document.getElementById('complaint-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitForm();
+        });
+        
+        // 为提交按钮添加点击事件监听器
+        document.getElementById('submit-complaint').addEventListener('click', function() {
+            submitForm();
+        });
+        
+        // 保存投诉数据
+        function saveComplaintData(complaintId) {
+            // 获取表单数据
+            const complaintData = {
+                id: complaintId,
+                type: document.getElementById('complaint-type').value,
+                typeText: document.getElementById('complaint-type').options[document.getElementById('complaint-type').selectedIndex].text,
+                location: document.getElementById('complaint-location').value,
+                title: document.getElementById('complaint-title').value,
+                description: document.getElementById('complaint-description').value,
+                demand: document.getElementById('complaint-demand').value,
+                contact: {
+                    name: document.getElementById('contact-name').value,
+                    phone: document.getElementById('contact-phone').value,
+                    email: document.getElementById('contact-email').value
+                },
+                files: uploadedFiles.length,
+                status: 'pending',
+                statusText: '待处理',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                processLogs: [
+                    {
+                        status: 'pending',
+                        statusText: '待处理',
+                        timestamp: new Date().toISOString(),
+                        comment: '投诉已提交，等待处理'
+                    }
+                ]
+            };
+            
+            // 从本地存储获取现有投诉数据
+            let complaints = JSON.parse(localStorage.getItem('complaints')) || [];
+            
+            // 添加新投诉
+            complaints.push(complaintData);
+            
+            // 保存回本地存储
+            localStorage.setItem('complaints', JSON.stringify(complaints));
+        }
+        
+        // 弹窗按钮事件
+        document.getElementById('view-detail').addEventListener('click', function() {
+            const complaintId = document.getElementById('complaint-id').textContent;
+            window.location.href = `query.html?id=${complaintId}`;
+        });
+        
+        document.getElementById('close-modal').addEventListener('click', function() {
+            window.location.href = 'index.html';
+        });
+        
+        document.getElementById('modal-overlay').addEventListener('click', function() {
+            document.getElementById('success-modal').classList.add('hidden');
+        });
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadComplaintTypes();
+        });
+    </script>
+</body>
+</html>

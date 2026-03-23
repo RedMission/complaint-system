@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投诉查询 - 二维码投诉举报平台</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#3b82f6',
+                        accent: '#60a5fa',
+                        light: '#f3f4f6',
+                        dark: '#1f2937',
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .form-input-focus {
+                @apply focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none;
+            }
+            .status-badge {
+                @apply inline-block px-3 py-1 rounded-full text-sm font-medium;
+            }
+            .status-pending {
+                @apply bg-yellow-100 text-yellow-800;
+            }
+            .status-processing {
+                @apply bg-blue-100 text-blue-800;
+            }
+            .status-resolved {
+                @apply bg-green-100 text-green-800;
+            }
+            .status-rejected {
+                @apply bg-red-100 text-red-800;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 导航栏 -->
+    <nav class="bg-primary text-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-gavel text-2xl"></i>
+                <span class="text-xl font-bold">二维码投诉举报平台</span>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="index.html" class="hover:text-accent transition-colors duration-200">首页</a>
+                <a href="complaint.html" class="hover:text-accent transition-colors duration-200">我要投诉</a>
+                <a href="query.html" class="hover:text-accent transition-colors duration-200 font-medium">投诉查询</a>
+                <a href="admin/login.html" class="hover:text-accent transition-colors duration-200">后台管理</a>
+            </div>
+            <button class="md:hidden focus:outline-none" id="mobile-menu-button">
+                <i class="fa fa-bars text-xl"></i>
+            </button>
+        </div>
+        <!-- 移动端菜单 -->
+        <div class="md:hidden hidden bg-primary" id="mobile-menu">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-2">
+                <a href="index.html" class="block py-2 hover:text-accent transition-colors duration-200">首页</a>
+                <a href="complaint.html" class="block py-2 hover:text-accent transition-colors duration-200">我要投诉</a>
+                <a href="query.html" class="block py-2 hover:text-accent transition-colors duration-200">投诉查询</a>
+                <a href="admin/login.html" class="block py-2 hover:text-accent transition-colors duration-200">后台管理</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面标题 -->
+    <header class="bg-gradient-to-r from-primary to-secondary text-white py-8">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl font-bold">投诉查询</h1>
+            <p class="mt-2">通过投诉编号查询投诉处理进度和结果</p>
+        </div>
+    </header>
+
+    <!-- 主要内容 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 查询表单 -->
+        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 mb-8" id="query-form-container">
+            <h2 class="text-2xl font-bold mb-6 text-primary">投诉查询</h2>
+            <form id="query-form">
+                <div class="mb-6">
+                    <label for="complaint-id" class="block text-gray-700 font-medium mb-2">投诉编号 <span class="text-red-500">*</span></label>
+                    <div class="flex">
+                        <input type="text" id="complaint-id" class="w-full px-4 py-2 border border-gray-300 rounded-l-lg form-input-focus" placeholder="请输入投诉编号，如：CS202507210001" required>
+                        <button type="submit" class="bg-primary text-white font-medium px-6 rounded-r-lg hover:bg-blue-700 transition duration-300">
+                            <i class="fa fa-search mr-2"></i> 查询
+                        </button>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-2">投诉编号在您提交投诉后系统自动生成，请妥善保管</p>
+                </div>
+            </form>
+        </div>
+
+        <!-- 查询结果 -->
+        <div class="max-w-4xl mx-auto hidden" id="query-result">
+            <!-- 投诉基本信息 -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-primary" id="result-title">投诉标题</h2>
+                        <div class="flex items-center mt-2">
+                            <span class="status-badge" id="result-status">待处理</span>
+                            <span class="text-gray-500 text-sm ml-4">提交时间：<span id="result-time">2025-07-21 10:30:00</span></span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-gray-600">投诉编号</p>
+                        <p class="font-mono font-bold text-lg" id="result-id">CS202507210001</p>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3 text-gray-700">投诉内容</h3>
+                        <p class="text-gray-600" id="result-description">投诉内容描述...</p>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3 text-gray-700">投诉详情</h3>
+                        <div class="space-y-3">
+                            <div class="flex">
+                                <span class="text-gray-500 w-20">投诉类型：</span>
+                                <span class="font-medium" id="result-type">环境保护</span>
+                            </div>
+                            <div class="flex">
+                                <span class="text-gray-500 w-20">投诉地点：</span>
+                                <span class="font-medium" id="result-location">某某市某某区某某路</span>
+                            </div>
+                            <div class="flex">
+                                <span class="text-gray-500 w-20">联系人：</span>
+                                <span class="font-medium" id="result-contact">张三</span>
+                            </div>
+                            <div class="flex">
+                                <span class="text-gray-500 w-20">联系电话：</span>
+                                <span class="font-medium" id="result-phone">138****1234</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6" id="result-demand-container">
+                    <h3 class="text-lg font-semibold mb-3 text-gray-700">投诉诉求</h3>
+                    <p class="text-gray-600" id="result-demand">投诉诉求描述...</p>
+                </div>
+            </div>
+            
+            <!-- 处理进度 -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-xl font-bold mb-6 text-primary">处理进度</h3>
+                <div class="relative">
+                    <!-- 时间轴线 -->
+                    <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-200 ml-6"></div>
+                    
+                    <div class="space-y-8" id="process-timeline">
+                        <!-- 进度项将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 处理结果 -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6" id="result-feedback-container">
+                <h3 class="text-xl font-bold mb-4 text-primary">处理结果</h3>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="text-gray-700" id="result-feedback">处理结果将在这里显示...</p>
+                </div>
+            </div>
+            
+            <!-- 满意度评价 -->
+            <div class="bg-white rounded-lg shadow-md p-6" id="satisfaction-container">
+                <h3 class="text-xl font-bold mb-4 text-primary">满意度评价</h3>
+                <p class="text-gray-600 mb-4">请对本次投诉处理结果进行评价，您的反馈将帮助我们改进工作。</p>
+                
+                <div class="flex items-center space-x-4 mb-6">
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="satisfaction" value="very-satisfied" class="form-radio text-primary">
+                        <span class="ml-2">非常满意</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="satisfaction" value="satisfied" class="form-radio text-primary">
+                        <span class="ml-2">满意</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="satisfaction" value="neutral" class="form-radio text-primary">
+                        <span class="ml-2">一般</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="satisfaction" value="unsatisfied" class="form-radio text-primary">
+                        <span class="ml-2">不满意</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="satisfaction" value="very-unsatisfied" class="form-radio text-primary">
+                        <span class="ml-2">非常不满意</span>
+                    </label>
+                </div>
+                
+                <div class="mb-6">
+                    <label for="feedback-comment" class="block text-gray-700 font-medium mb-2">评价意见</label>
+                    <textarea id="feedback-comment" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg form-input-focus" placeholder="请输入您的评价意见（选填）"></textarea>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button id="submit-feedback" class="bg-primary text-white font-medium py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center">
+                        提交评价 <i class="fa fa-check ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 无结果提示 -->
+        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 text-center hidden" id="no-result">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i class="fa fa-search text-gray-400 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-700 mb-2">未找到投诉信息</h3>
+            <p class="text-gray-600 mb-6">请检查投诉编号是否正确，或联系客服获取帮助</p>
+            <button id="back-to-query" class="bg-primary text-white font-medium py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300">
+                返回查询
+            </button>
+        </div>
+    </main>
+
+    <!-- 评价成功弹窗 -->
+    <div class="fixed inset-0 flex items-center justify-center z-50 hidden" id="feedback-modal">
+        <div class="absolute inset-0 bg-black bg-opacity-50" id="modal-overlay"></div>
+        <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full relative z-10">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa fa-check text-green-500 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">评价提交成功</h3>
+                <p class="text-gray-600 mb-6">感谢您的反馈，我们将继续改进工作，为您提供更好的服务。</p>
+                <button id="close-feedback-modal" class="bg-primary text-white font-medium py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300">
+                    确定
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-8 mt-16">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">关于我们</h3>
+                    <p class="text-gray-400">二维码投诉举报平台致力于为市民提供便捷、高效的投诉渠道，促进社会治理水平提升。</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">联系方式</h3>
+                    <ul class="text-gray-400 space-y-2">
+                        <li class="flex items-center">
+                            <i class="fa fa-phone mr-2"></i> 服务热线：12345
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-envelope mr-2"></i> 邮箱：service@complaint.gov.cn
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fa fa-map-marker mr-2"></i> 地址：某某市政务服务中心
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">关注我们</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-white hover:text-accent transition-colors duration-200">
+                            <i class="fa fa-weixin text-2xl"></i>
+                        </a>
+                        <a href="#" class="text-white hover:text-accent transition-colors duration-200">
+                            <i class="fa fa-weibo text-2xl"></i>
+                        </a>
+                        <a href="#" class="text-white hover:text-accent transition-colors duration-200">
+                            <i class="fa fa-qq text-2xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>&copy; 2025 二维码投诉举报平台 版权所有</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 移动端菜单切换
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // 从URL获取投诉ID
+        function getComplaintIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            const complaintId = getComplaintIdFromUrl();
+            if (complaintId) {
+                document.getElementById('complaint-id').value = complaintId;
+                document.getElementById('query-form').dispatchEvent(new Event('submit'));
+            }
+        });
+        
+        // 查询表单提交
+        document.getElementById('query-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const complaintId = document.getElementById('complaint-id').value.trim();
+            
+            if (!complaintId) {
+                alert('请输入投诉编号');
+                return;
+            }
+            
+            // 从本地存储获取投诉数据
+            const complaints = JSON.parse(localStorage.getItem('complaints')) || [];
+            const complaint = complaints.find(c => c.id === complaintId);
+            
+            if (complaint) {
+                // 显示查询结果
+                displayComplaintResult(complaint);
+            } else {
+                // 显示无结果提示
+                document.getElementById('query-form-container').classList.add('hidden');
+                document.getElementById('query-result').classList.add('hidden');
+                document.getElementById('no-result').classList.remove('hidden');
+            }
+        });
+        
+        // 显示投诉结果
+        function displayComplaintResult(complaint) {
+            // 隐藏查询表单，显示结果
+            document.getElementById('query-form-container').classList.add('hidden');
+            document.getElementById('no-result').classList.add('hidden');
+            document.getElementById('query-result').classList.remove('hidden');
+            
+            // 填充基本信息
+            document.getElementById('result-title').textContent = complaint.title;
+            document.getElementById('result-id').textContent = complaint.id;
+            document.getElementById('result-description').textContent = complaint.description;
+            document.getElementById('result-type').textContent = complaint.typeText;
+            document.getElementById('result-location').textContent = complaint.location;
+            document.getElementById('result-contact').textContent = complaint.contact.name;
+            
+            // 隐藏部分手机号
+            const phone = complaint.contact.phone;
+            const maskedPhone = phone.substring(0, 3) + '****' + phone.substring(7);
+            document.getElementById('result-phone').textContent = maskedPhone;
+            
+            // 格式化时间
+            const createdAt = new Date(complaint.createdAt);
+            document.getElementById('result-time').textContent = formatDateTime(createdAt);
+            
+            // 设置状态标签
+            const statusElement = document.getElementById('result-status');
+            statusElement.textContent = complaint.statusText;
+            statusElement.className = 'status-badge';
+            
+            switch (complaint.status) {
+                case 'pending':
+                    statusElement.classList.add('status-pending');
+                    break;
+                case 'processing':
+                    statusElement.classList.add('status-processing');
+                    break;
+                case 'resolved':
+                    statusElement.classList.add('status-resolved');
+                    break;
+                case 'rejected':
+                    statusElement.classList.add('status-rejected');
+                    break;
+            }
+            
+            // 显示投诉诉求（如果有）
+            if (complaint.demand) {
+                document.getElementById('result-demand').textContent = complaint.demand;
+                document.getElementById('result-demand-container').classList.remove('hidden');
+            } else {
+                document.getElementById('result-demand-container').classList.add('hidden');
+            }
+            
+            // 生成处理进度时间轴
+            generateProcessTimeline(complaint.processLogs);
+            
+            // 显示处理结果（如果有）
+            const lastLog = complaint.processLogs[complaint.processLogs.length - 1];
+            if (lastLog.status === 'resolved' || lastLog.status === 'rejected') {
+                document.getElementById('result-feedback').textContent = lastLog.comment || '处理结果将在这里显示...';
+                document.getElementById('result-feedback-container').classList.remove('hidden');
+                
+                // 显示满意度评价
+                document.getElementById('satisfaction-container').classList.remove('hidden');
+            } else {
+                document.getElementById('result-feedback-container').classList.add('hidden');
+                document.getElementById('satisfaction-container').classList.add('hidden');
+            }
+        }
+        
+        // 生成处理进度时间轴
+        function generateProcessTimeline(logs) {
+            const timelineContainer = document.getElementById('process-timeline');
+            timelineContainer.innerHTML = '';
+            
+            logs.forEach((log, index) => {
+                const isLast = index === logs.length - 1;
+                
+                const logElement = document.createElement('div');
+                logElement.className = 'flex';
+                
+                // 时间点
+                const timePoint = document.createElement('div');
+                timePoint.className = 'flex-shrink-0 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center z-10';
+                timePoint.innerHTML = `<i class="fa fa-${getLogIcon(log.status)}"></i>`;
+                
+                // 内容
+                const content = document.createElement('div');
+                content.className = 'ml-4 flex-grow';
+                
+                const header = document.createElement('div');
+                header.className = 'flex justify-between items-center mb-1';
+                
+                const status = document.createElement('h4');
+                status.className = 'font-medium text-lg';
+                status.textContent = log.statusText;
+                
+                const time = document.createElement('span');
+                time.className = 'text-gray-500 text-sm';
+                time.textContent = formatDateTime(new Date(log.timestamp));
+                
+                header.appendChild(status);
+                header.appendChild(time);
+                
+                const comment = document.createElement('p');
+                comment.className = 'text-gray-600';
+                comment.textContent = log.comment;
+                
+                content.appendChild(header);
+                content.appendChild(comment);
+                
+                logElement.appendChild(timePoint);
+                logElement.appendChild(content);
+                
+                timelineContainer.appendChild(logElement);
+            });
+        }
+        
+        // 获取日志图标
+        function getLogIcon(status) {
+            switch (status) {
+                case 'pending':
+                    return 'clock-o';
+                case 'processing':
+                    return 'spinner';
+                case 'resolved':
+                    return 'check';
+                case 'rejected':
+                    return 'times';
+                default:
+                    return 'info';
+            }
+        }
+        
+        // 格式化日期时间
+        function formatDateTime(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+        
+        // 返回查询按钮
+        document.getElementById('back-to-query').addEventListener('click', function() {
+            document.getElementById('query-form-container').classList.remove('hidden');
+            document.getElementById('query-result').classList.add('hidden');
+            document.getElementById('no-result').classList.add('hidden');
+            document.getElementById('complaint-id').value = '';
+        });
+        
+        // 提交评价
+        document.getElementById('submit-feedback').addEventListener('click', function() {
+            const complaintId = document.getElementById('result-id').textContent;
+            const satisfaction = document.querySelector('input[name="satisfaction"]:checked');
+            const comment = document.getElementById('feedback-comment').value;
+            
+            if (!satisfaction) {
+                alert('请选择满意度评价');
+                return;
+            }
+            
+            // 保存评价到本地存储
+            saveFeedback(complaintId, satisfaction.value, comment);
+            
+            // 显示成功弹窗
+            document.getElementById('feedback-modal').classList.remove('hidden');
+        });
+        
+        // 保存评价
+        function saveFeedback(complaintId, satisfaction, comment) {
+            // 从本地存储获取投诉数据
+            const complaints = JSON.parse(localStorage.getItem('complaints')) || [];
+            const complaintIndex = complaints.findIndex(c => c.id === complaintId);
+            
+            if (complaintIndex !== -1) {
+                // 添加评价信息
+                complaints[complaintIndex].feedback = {
+                    satisfaction: satisfaction,
+                    comment: comment,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // 保存回本地存储
+                localStorage.setItem('complaints', JSON.stringify(complaints));
+            }
+        }
+        
+        // 关闭评价弹窗
+        document.getElementById('close-feedback-modal').addEventListener('click', function() {
+            document.getElementById('feedback-modal').classList.add('hidden');
+            
+            // 禁用评价区域
+            document.querySelectorAll('#satisfaction-container input, #satisfaction-container textarea, #submit-feedback').forEach(element => {
+                element.disabled = true;
+            });
+            
+            // 显示已评价提示
+            const satisfactionContainer = document.getElementById('satisfaction-container');
+            const header = satisfactionContainer.querySelector('h3');
+            header.textContent = '已提交评价';
+            header.classList.add('text-green-600');
+        });
+        
+        document.getElementById('modal-overlay').addEventListener('click', function() {
+            document.getElementById('feedback-modal').classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
