@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分类管理 - 二维码投诉举报平台</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#3b82f6',
+                        accent: '#60a5fa',
+                        light: '#f3f4f6',
+                        dark: '#1f2937',
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .sidebar-active {
+                @apply bg-blue-700 text-white;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="flex h-screen overflow-hidden">
+        <!-- 侧边栏 -->
+        <aside class="bg-primary w-64 flex-shrink-0 hidden md:block">
+            <div class="h-full flex flex-col">
+                <!-- 顶部Logo -->
+                <div class="flex items-center justify-center h-16 border-b border-blue-700">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-gavel text-white text-2xl"></i>
+                        <span class="text-white text-xl font-bold">投诉平台管理</span>
+                    </div>
+                </div>
+                
+                <!-- 用户信息 -->
+                <div class="p-4 border-b border-blue-700">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary font-bold">
+                            <span id="user-initial">管</span>
+                        </div>
+                        <div>
+                            <p class="text-white font-medium" id="user-name">管理员</p>
+                            <p class="text-blue-200 text-xs" id="user-role">系统管理员</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 导航菜单 -->
+                <nav class="flex-1 overflow-y-auto py-4">
+                    <ul>
+                        <li class="mb-1">
+                            <a href="index.html" class="flex items-center px-4 py-3 text-blue-100 hover:bg-blue-700 transition-colors duration-200">
+                                <i class="fa fa-dashboard w-6 text-center"></i>
+                                <span class="ml-2">数据概览</span>
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="complaints.html" class="flex items-center px-4 py-3 text-blue-100 hover:bg-blue-700 transition-colors duration-200">
+                                <i class="fa fa-list-alt w-6 text-center"></i>
+                                <span class="ml-2">投诉管理</span>
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="categories.html" class="flex items-center px-4 py-3 sidebar-active">
+                                <i class="fa fa-tags w-6 text-center"></i>
+                                <span class="ml-2">分类管理</span>
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="users.html" class="flex items-center px-4 py-3 text-blue-100 hover:bg-blue-700 transition-colors duration-200">
+                                <i class="fa fa-users w-6 text-center"></i>
+                                <span class="ml-2">用户管理</span>
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <a href="settings.html" class="flex items-center px-4 py-3 text-blue-100 hover:bg-blue-700 transition-colors duration-200">
+                                <i class="fa fa-cog w-6 text-center"></i>
+                                <span class="ml-2">系统设置</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                
+                <!-- 底部退出 -->
+                <div class="p-4 border-t border-blue-700">
+                    <button id="logout-button" class="flex items-center px-4 py-2 text-blue-100 hover:bg-blue-700 rounded-lg transition-colors duration-200 w-full">
+                        <i class="fa fa-sign-out w-6 text-center"></i>
+                        <span class="ml-2">退出登录</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- 主内容区 -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- 顶部导航栏 -->
+            <header class="bg-white shadow-sm z-10">
+                <div class="flex items-center justify-between h-16 px-6">
+                    <!-- 移动端菜单按钮 -->
+                    <button class="md:hidden text-gray-500 focus:outline-none" id="mobile-menu-button">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                    
+                    <!-- 搜索框 -->
+                    <div class="hidden md:block flex-1 max-w-md ml-8">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa fa-search text-gray-400"></i>
+                            </div>
+                            <input type="text" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none" placeholder="搜索投诉、用户...">
+                        </div>
+                    </div>
+                    
+                    <!-- 右侧工具栏 -->
+                    <div class="flex items-center space-x-4">
+                        <button class="text-gray-500 hover:text-gray-700 focus:outline-none relative">
+                            <i class="fa fa-bell text-xl"></i>
+                            <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                        </button>
+                        <button class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                            <i class="fa fa-envelope text-xl"></i>
+                        </button>
+                        <div class="border-l pl-4 border-gray-300 relative">
+                            <button class="flex items-center text-gray-700 hover:text-gray-900 focus:outline-none" id="user-menu-button">
+                                <span class="mr-2 hidden md:block" id="header-user-name">管理员</span>
+                                <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+                                    <span id="header-user-initial">管</span>
+                                </div>
+                                <i class="fa fa-chevron-down ml-2 text-xs text-gray-500"></i>
+                            </button>
+                            <!-- 用户下拉菜单 -->
+                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 hidden z-50" id="user-dropdown">
+                                <a href="users.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">用户管理</a>
+                                <div class="border-t border-gray-100"></div>
+                                <button id="header-logout-button" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">退出登录</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 移动端侧边栏 -->
+            <div class="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 hidden" id="mobile-sidebar-overlay">
+                <div class="fixed inset-y-0 left-0 w-64 bg-primary z-50 transform transition-transform duration-300 -translate-x-full" id="mobile-sidebar">
+                    <!-- 移动端侧边栏内容 -->
+                    <div class="flex items-center justify-between h-16 border-b border-blue-700 px-4">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa fa-gavel text-white text-2xl"></i>
+                            <span class="text-white text-xl font-bold">投诉平台管理</span>
+                        </div>
+                        <button class="text-white focus:outline-none" id="close-mobile-sidebar">
+                            <i class="fa fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- 用户信息 -->
+                    <div class="p-4 border-b border-blue-700">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary font-bold">
+                                <span id="mobile-user-initial">管</span>
+                            </div>
+                            <div>
+                                <p class="text-white font-medium" id="mobile-user-name">管理员</p>
+                                <p class="text-blue-200 text-xs" id="mobile-user-role">系统管理员</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 导航菜单 -->
+                    <nav class="py-4">
+                        <ul>
+                            <li class="mb-1">
+                                <a href="index.html" class="flex items-center px-4 py-3 text-blue-100 hover:bg-blue-700 transition-colors duration-200">
+                                    <i class="fa fa-dashboard w-6 text-center"></i>
+                                    <span class="ml-2">数据概览</span>
+                                </a>
+                            </li>
+                            <li class="mb-1">
+                                <a href="complaints.html" class="flex items-center px-4 py-3 text-blue-100 hover:bg-blue-700 transition-colors duration-200">
+                                    <i class="fa fa-list-alt w-6 text-center"></i>
+                                    <span class="ml-2">投诉管理</span>
+                                </a>
+                            </li>
+                            <li class="mb-1">
+                                <a href="categories.html" class="flex items-center px-4 py-3 sidebar-active">
+                                    <i class="fa fa-tags w-6 text-center"></i>
+                                    <span class="ml-2">分类管理</span>
+                                </a>
+                            </li>
+                            <li class="mb-1">
+                                <a href="users.html" class="flex items-center px-4 py-3 text-blue-100 hover:bg-blue-700 transition-colors duration-200">
+                                    <i class="fa fa-users w-6 text-center"></i>
+                                    <span class="ml-2">用户管理</span>
+                                </a>
+                            </li>
+                            <li class="mb-1">
+                                <a href="settings.html" class="flex items-center px-4 py-3 text-blue-100 hover:bg-blue-700 transition-colors duration-200">
+                                    <i class="fa fa-cog w-6 text-center"></i>
+                                    <span class="ml-2">系统设置</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- 主要内容 -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-gray-800">分类管理</h1>
+                    <p class="text-gray-600">管理投诉类型，包括添加、修改和删除操作</p>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="flex justify-between items-center mb-6">
+                    <button id="add-category-button" class="bg-primary text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center">
+                        <i class="fa fa-plus mr-2"></i> 添加投诉类型
+                    </button>
+                </div>
+                
+                <!-- 分类列表 -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead>
+                                <tr>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型名称</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型标识</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="categories-table">
+                                <!-- 分类数据将通过JavaScript动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- 添加/编辑分类弹窗 -->
+    <div class="fixed inset-0 flex items-center justify-center z-50 hidden" id="category-modal">
+        <div class="absolute inset-0 bg-black bg-opacity-50" id="modal-overlay"></div>
+        <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full relative z-10">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900" id="modal-title">添加投诉类型</h3>
+                <button id="close-modal" class="text-gray-400 hover:text-gray-600 focus:outline-none">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="category-form">
+                <input type="hidden" id="category-id">
+                <div class="mb-4">
+                    <label for="category-name" class="block text-gray-700 font-medium mb-2">类型名称 <span class="text-red-500">*</span></label>
+                    <input type="text" id="category-name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none" placeholder="请输入投诉类型名称" required>
+                </div>
+                <div class="mb-6">
+                    <label for="category-key" class="block text-gray-700 font-medium mb-2">类型标识 <span class="text-red-500">*</span></label>
+                    <input type="text" id="category-key" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none" placeholder="请输入类型标识（小写英文，无空格）" required>
+                    <p class="text-gray-500 text-sm mt-1">例如：environmental</p>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancel-button" class="bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg hover:bg-gray-300 transition duration-300">
+                        取消
+                    </button>
+                    <button type="submit" class="bg-primary text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                        保存
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 移动端侧边栏切换
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            document.getElementById('mobile-sidebar-overlay').classList.remove('hidden');
+            document.getElementById('mobile-sidebar').classList.remove('-translate-x-full');
+        });
+        
+        document.getElementById('close-mobile-sidebar').addEventListener('click', function() {
+            document.getElementById('mobile-sidebar-overlay').classList.add('hidden');
+            document.getElementById('mobile-sidebar').classList.add('-translate-x-full');
+        });
+        
+        document.getElementById('mobile-sidebar-overlay').addEventListener('click', function() {
+            document.getElementById('mobile-sidebar-overlay').classList.add('hidden');
+            document.getElementById('mobile-sidebar').classList.add('-translate-x-full');
+        });
+        
+        // 退出登录
+        document.getElementById('logout-button').addEventListener('click', function() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
+            }
+        });
+        
+        // 头部退出登录
+        document.getElementById('header-logout-button').addEventListener('click', function() {
+            if (confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('currentUser');
+                window.location.href = 'login.html';
+            }
+        });
+        
+        // 用户下拉菜单
+        document.getElementById('user-menu-button').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('user-dropdown');
+            dropdown.classList.toggle('hidden');
+        });
+        
+        // 点击其他地方关闭下拉菜单
+        document.addEventListener('click', function() {
+            const dropdown = document.getElementById('user-dropdown');
+            if (!dropdown.classList.contains('hidden')) {
+                dropdown.classList.add('hidden');
+            }
+        });
+        
+        // 防止下拉菜单内部点击关闭
+        document.getElementById('user-dropdown').addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // 验证用户登录状态
+        function checkUserLogin() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return false;
+            }
+            
+            // 更新用户信息显示
+            document.getElementById('user-name').textContent = currentUser.name;
+            document.getElementById('user-role').textContent = currentUser.role === 'admin' ? '系统管理员' : '普通工作人员';
+            document.getElementById('user-initial').textContent = currentUser.name.charAt(0);
+            
+            document.getElementById('header-user-name').textContent = currentUser.name;
+            document.getElementById('header-user-initial').textContent = currentUser.name.charAt(0);
+            
+            document.getElementById('mobile-user-name').textContent = currentUser.name;
+            document.getElementById('mobile-user-role').textContent = currentUser.role === 'admin' ? '系统管理员' : '普通工作人员';
+            document.getElementById('mobile-user-initial').textContent = currentUser.name.charAt(0);
+            
+            return true;
+        }
+        
+        // 初始化分类数据
+        function initCategories() {
+            // 从本地存储获取分类数据
+            let categories = JSON.parse(localStorage.getItem('categories')) || [];
+            
+            // 如果没有分类数据，创建默认分类
+            if (categories.length === 0) {
+                categories = [
+                    { id: 1, name: '环境保护', key: 'environmental', status: 'active' },
+                    { id: 2, name: '噪音污染', key: 'noise', status: 'active' },
+                    { id: 3, name: '交通出行', key: 'traffic', status: 'active' },
+                    { id: 4, name: '社区管理', key: 'community', status: 'active' },
+                    { id: 5, name: '服务质量', key: 'service', status: 'active' },
+                    { id: 6, name: '公共设施', key: 'facility', status: 'active' },
+                    { id: 7, name: '其他问题', key: 'other', status: 'active' },
+                    { id: 8, name: '未分类', key: 'uncategorized', status: 'active' }
+                ];
+                localStorage.setItem('categories', JSON.stringify(categories));
+            }
+            
+            // 渲染分类列表
+            renderCategories(categories);
+        }
+        
+        // 渲染分类列表
+        function renderCategories(categories) {
+            const tableBody = document.getElementById('categories-table');
+            tableBody.innerHTML = '';
+            
+            categories.forEach(category => {
+                const row = document.createElement('tr');
+                
+                // 设置状态显示
+                let statusText = category.status === 'active' ? '启用' : '禁用';
+                let statusClass = category.status === 'active' ? 'text-green-600' : 'text-gray-500';
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${category.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${category.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${category.key}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${statusClass}">${statusText}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        ${category.key !== 'uncategorized' ? `
+                            <button class="edit-category text-primary hover:text-blue-700 mr-3" data-id="${category.id}">
+                                <i class="fa fa-pencil"></i> 编辑
+                            </button>
+                            <button class="delete-category text-danger hover:text-red-700" data-id="${category.id}">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        ` : '<span class="text-gray-400">系统默认</span>'}
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // 添加编辑和删除事件监听器
+            addCategoryEventListeners();
+        }
+        
+        // 添加分类事件监听器
+        function addCategoryEventListeners() {
+            // 编辑按钮点击事件
+            document.querySelectorAll('.edit-category').forEach(button => {
+                button.addEventListener('click', function() {
+                    const categoryId = parseInt(this.getAttribute('data-id'));
+                    editCategory(categoryId);
+                });
+            });
+            
+            // 删除按钮点击事件
+            document.querySelectorAll('.delete-category').forEach(button => {
+                button.addEventListener('click', function() {
+                    const categoryId = parseInt(this.getAttribute('data-id'));
+                    deleteCategory(categoryId);
+                });
+            });
+        }
+        
+        // 打开添加分类弹窗
+        document.getElementById('add-category-button').addEventListener('click', function() {
+            document.getElementById('modal-title').textContent = '添加投诉类型';
+            document.getElementById('category-id').value = '';
+            document.getElementById('category-name').value = '';
+            document.getElementById('category-key').value = '';
+            document.getElementById('category-modal').classList.remove('hidden');
+        });
+        
+        // 关闭弹窗
+        document.getElementById('close-modal').addEventListener('click', function() {
+            document.getElementById('category-modal').classList.add('hidden');
+        });
+        
+        document.getElementById('cancel-button').addEventListener('click', function() {
+            document.getElementById('category-modal').classList.add('hidden');
+        });
+        
+        document.getElementById('modal-overlay').addEventListener('click', function() {
+            document.getElementById('category-modal').classList.add('hidden');
+        });
+        
+        // 编辑分类
+        function editCategory(categoryId) {
+            const categories = JSON.parse(localStorage.getItem('categories')) || [];
+            const category = categories.find(c => c.id === categoryId);
+            
+            if (category) {
+                document.getElementById('modal-title').textContent = '编辑投诉类型';
+                document.getElementById('category-id').value = category.id;
+                document.getElementById('category-name').value = category.name;
+                document.getElementById('category-key').value = category.key;
+                document.getElementById('category-modal').classList.remove('hidden');
+            }
+        }
+        
+        // 删除分类
+        function deleteCategory(categoryId) {
+            if (confirm('确定要删除该投诉类型吗？删除后，使用该类型的投诉将被标记为未分类。')) {
+                let categories = JSON.parse(localStorage.getItem('categories')) || [];
+                const category = categories.find(c => c.id === categoryId);
+                
+                if (category) {
+                    // 从分类列表中移除
+                    categories = categories.filter(c => c.id !== categoryId);
+                    localStorage.setItem('categories', JSON.stringify(categories));
+                    
+                    // 更新使用该分类的投诉为未分类
+                    updateComplaintsCategory(category.key);
+                    
+                    // 重新渲染分类列表
+                    renderCategories(categories);
+                }
+            }
+        }
+        
+        // 更新投诉分类为未分类
+        function updateComplaintsCategory(oldCategoryKey) {
+            const complaints = JSON.parse(localStorage.getItem('complaints')) || [];
+            const updatedComplaints = complaints.map(complaint => {
+                if (complaint.type === oldCategoryKey) {
+                    return {
+                        ...complaint,
+                        type: 'uncategorized',
+                        typeText: '未分类'
+                    };
+                }
+                return complaint;
+            });
+            localStorage.setItem('complaints', JSON.stringify(updatedComplaints));
+        }
+        
+        // 提交分类表单
+        document.getElementById('category-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('category-id').value;
+            const name = document.getElementById('category-name').value;
+            const key = document.getElementById('category-key').value.toLowerCase().replace(/\s+/g, '');
+            
+            // 验证类型标识是否符合要求
+            if (!/^[a-z]+$/.test(key)) {
+                alert('类型标识只能包含小写字母，不能有空格或其他字符');
+                return;
+            }
+            
+            let categories = JSON.parse(localStorage.getItem('categories')) || [];
+            
+            if (id) {
+                // 编辑现有分类
+                const categoryIndex = categories.findIndex(c => c.id === parseInt(id));
+                if (categoryIndex !== -1) {
+                    const oldKey = categories[categoryIndex].key;
+                    categories[categoryIndex] = {
+                        ...categories[categoryIndex],
+                        name,
+                        key
+                    };
+                    
+                    // 如果类型标识改变，更新使用该分类的投诉
+                    if (oldKey !== key) {
+                        updateComplaintsCategoryKey(oldKey, key, name);
+                    }
+                }
+            } else {
+                // 添加新分类
+                const newId = categories.length > 0 ? Math.max(...categories.map(c => c.id)) + 1 : 1;
+                categories.push({
+                    id: newId,
+                    name,
+                    key,
+                    status: 'active'
+                });
+            }
+            
+            localStorage.setItem('categories', JSON.stringify(categories));
+            document.getElementById('category-modal').classList.add('hidden');
+            renderCategories(categories);
+        });
+        
+        // 更新投诉分类标识
+        function updateComplaintsCategoryKey(oldKey, newKey, newName) {
+            const complaints = JSON.parse(localStorage.getItem('complaints')) || [];
+            const updatedComplaints = complaints.map(complaint => {
+                if (complaint.type === oldKey) {
+                    return {
+                        ...complaint,
+                        type: newKey,
+                        typeText: newName
+                    };
+                }
+                return complaint;
+            });
+            localStorage.setItem('complaints', JSON.stringify(updatedComplaints));
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkUserLogin()) {
+                initCategories();
+            }
+        });
+    </script>
+</body>
+</html>
