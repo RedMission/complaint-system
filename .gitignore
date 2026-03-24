@@ -1,5 +1,5 @@
 # 忽略配置文件
-config.js
+# config.js
 
 # 忽略依赖文件
 node_modules/
