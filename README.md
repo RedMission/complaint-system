@@ -14,8 +14,9 @@
 ## 技术栈
 
 - **前端技术**：HTML5 + CSS3 + JavaScript + Tailwind CSS v3 + Font Awesome
-- **数据存储**：LocalStorage（模拟数据存储）
+- **数据存储**：Firebase Firestore（云数据库） + LocalStorage（离线备份）
 - **二维码生成**：qrcode-generator.js
 - **图表可视化**：Chart.js
+- **后端服务**：Firebase（提供数据库和分析服务）
 
 ## 项目结构

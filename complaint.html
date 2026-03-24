@@ -8,6 +8,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="config.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const analytics = getAnalytics(app);
+
+        // Make db available globally
+        window.db = db;
+    </script>
     <script>
         tailwind.config = {
             theme: {
@@ -644,7 +660,7 @@
         }
         
         // 提交表单
-        function submitForm() {
+        async function submitForm() {
             // 验证协议勾选
             if (!document.getElementById('agreement').checked) {
                 alert('请阅读并同意投诉举报须知');
@@ -662,25 +678,28 @@
             document.getElementById('complaint-id').textContent = complaintId;
             
             // 保存投诉数据到本地存储
-            saveComplaintData(complaintId);
+            await saveComplaintData(complaintId);
             
             // 显示成功弹窗
             document.getElementById('success-modal').classList.remove('hidden');
         }
         
         // 为表单添加提交事件监听器
-        document.getElementById('complaint-form').addEventListener('submit', function(e) {
+        document.getElementById('complaint-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            submitForm();
+            await submitForm();
         });
         
         // 为提交按钮添加点击事件监听器
-        document.getElementById('submit-complaint').addEventListener('click', function() {
-            submitForm();
+        document.getElementById('submit-complaint').addEventListener('click', async function() {
+            await submitForm();
         });
         
         // 保存投诉数据
-        function saveComplaintData(complaintId) {
+        async function saveComplaintData(complaintId) {
+            // 导入Firebase函数
+            const { collection, addDoc, setDoc, doc } = await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js");
+            
             // 获取表单数据
             const complaintData = {
                 id: complaintId,
@@ -710,14 +729,18 @@
                 ]
             };
             
-            // 从本地存储获取现有投诉数据
-            let complaints = JSON.parse(localStorage.getItem('complaints')) || [];
-            
-            // 添加新投诉
-            complaints.push(complaintData);
-            
-            // 保存回本地存储
-            localStorage.setItem('complaints', JSON.stringify(complaints));
+            try {
+                // 保存到Firebase Firestore
+                await setDoc(doc(db, 'complaints', complaintId), complaintData);
+                console.log('投诉保存成功:', complaintId);
+            } catch (error) {
+                console.error('保存投诉失败:', error);
+                // 保存到本地存储作为备份
+                let complaints = JSON.parse(localStorage.getItem('complaints')) || [];
+                complaints.push(complaintData);
+                localStorage.setItem('complaints', JSON.stringify(complaints));
+                alert('网络连接失败，数据已保存到本地，稍后会自动同步');
+            }
         }
         
         // 弹窗按钮事件

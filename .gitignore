@@ -1,0 +1,34 @@
+# 忽略配置文件
+config.js
+
+# 忽略依赖文件
+node_modules/
+
+# 忽略构建文件
+build/
+dist/
+
+# 忽略环境变量文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 忽略日志文件
+logs
+*.log
+
+# 忽略操作系统文件
+.DS_Store
+Thumbs.db
+
+# 忽略编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 忽略本地存储文件
+localStorage.json

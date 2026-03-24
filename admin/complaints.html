@@ -8,6 +8,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="../config.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const analytics = getAnalytics(app);
+
+        // Make db available globally
+        window.db = db;
+    </script>
     <script>
         tailwind.config = {
             theme: {
@@ -517,10 +533,22 @@
         let selectedComplaintId = null;
         
         // 初始化页面
-        function initPage() {
-            // 从本地存储获取投诉数据
-            complaints = JSON.parse(localStorage.getItem('complaints')) || [];
-            filteredComplaints = [...complaints];
+        async function initPage() {
+            try {
+                // 导入Firebase函数
+                const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js");
+                
+                // 从Firebase Firestore获取投诉数据
+                const complaintsCol = collection(db, 'complaints');
+                const complaintsSnapshot = await getDocs(complaintsCol);
+                complaints = complaintsSnapshot.docs.map(doc => doc.data());
+                filteredComplaints = [...complaints];
+            } catch (error) {
+                console.error('获取投诉数据失败:', error);
+                // 从本地存储获取投诉数据作为备份
+                complaints = JSON.parse(localStorage.getItem('complaints')) || [];
+                filteredComplaints = [...complaints];
+            }
             
             // 渲染投诉列表
             renderComplaintsList();
@@ -953,10 +981,13 @@
         }
         
         // 处理投诉
-        function processComplaint(complaintId, status, comment) {
+        async function processComplaint(complaintId, status, comment) {
             const complaintIndex = complaints.findIndex(c => c.id === complaintId);
             
             if (complaintIndex === -1) return;
+            
+            // 导入Firebase函数
+            const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js");
             
             // 更新投诉状态
             const statusTextMap = {
@@ -966,35 +997,68 @@
                 'rejected': '已驳回'
             };
             
-            complaints[complaintIndex].status = status;
-            complaints[complaintIndex].statusText = statusTextMap[status];
-            complaints[complaintIndex].updatedAt = new Date().toISOString();
-            
-            // 添加处理记录
-            complaints[complaintIndex].processLogs.push({
+            const updatedComplaint = {
+                ...complaints[complaintIndex],
                 status: status,
                 statusText: statusTextMap[status],
-                timestamp: new Date().toISOString(),
-                comment: comment
-            });
+                updatedAt: new Date().toISOString(),
+                processLogs: [...complaints[complaintIndex].processLogs, {
+                    status: status,
+                    statusText: statusTextMap[status],
+                    timestamp: new Date().toISOString(),
+                    comment: comment
+                }]
+            };
             
-            // 保存到本地存储
-            localStorage.setItem('complaints', JSON.stringify(complaints));
-            
-            // 更新筛选后的投诉列表
-            const filteredIndex = filteredComplaints.findIndex(c => c.id === complaintId);
-            if (filteredIndex !== -1) {
-                filteredComplaints[filteredIndex] = {...complaints[complaintIndex]};
+            try {
+                // 保存到Firebase Firestore
+                await setDoc(doc(db, 'complaints', complaintId), updatedComplaint);
+                
+                // 更新本地数据
+                complaints[complaintIndex] = updatedComplaint;
+                
+                // 保存到本地存储作为备份
+                localStorage.setItem('complaints', JSON.stringify(complaints));
+                
+                // 更新筛选后的投诉列表
+                const filteredIndex = filteredComplaints.findIndex(c => c.id === complaintId);
+                if (filteredIndex !== -1) {
+                    filteredComplaints[filteredIndex] = {...updatedComplaint};
+                }
+                
+                // 重新渲染列表
+                renderComplaintsList();
+                
+                // 关闭弹窗
+                document.getElementById('process-modal').classList.add('hidden');
+                
+                alert('投诉处理成功');
+            } catch (error) {
+                console.error('处理投诉失败:', error);
+                // 仅更新本地存储
+                complaints[complaintIndex] = updatedComplaint;
+                localStorage.setItem('complaints', JSON.stringify(complaints));
+                
+                // 更新筛选后的投诉列表
+                const filteredIndex = filteredComplaints.findIndex(c => c.id === complaintId);
+                if (filteredIndex !== -1) {
+                    filteredComplaints[filteredIndex] = {...updatedComplaint};
+                }
+                
+                // 重新渲染列表
+                renderComplaintsList();
+                
+                // 关闭弹窗
+                document.getElementById('process-modal').classList.add('hidden');
+                
+                alert('网络连接失败，处理结果已保存到本地，稍后会自动同步');
             }
-            
-            // 重新渲染列表
-            renderComplaintsList();
         }
         
         // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             if (checkUserLogin()) {
-                initPage();
+                await initPage();
                 
                 // 添加事件监听器
                 document.getElementById('filter-button').addEventListener('click', filterComplaints);
@@ -1077,7 +1141,7 @@
                 });
                 
                 // 处理投诉表单提交
-                document.getElementById('process-form').addEventListener('submit', function(e) {
+                document.getElementById('process-form').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
                     const complaintId = document.getElementById('process-complaint-id').value;
@@ -1089,13 +1153,7 @@
                         return;
                     }
                     
-                    processComplaint(complaintId, status, comment);
-                    
-                    // 关闭弹窗
-                    document.getElementById('process-modal').classList.add('hidden');
-                    
-                    // 显示成功提示
-                    alert('投诉处理成功');
+                    await processComplaint(complaintId, status, comment);
                 });
             }
         });

@@ -8,6 +8,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="../config.js"></script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const analytics = getAnalytics(app);
+
+        // Make db available globally
+        window.db = db;
+    </script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
     <script>
@@ -449,28 +465,56 @@
         }
         
         // 初始化页面数据
-        function initPageData() {
-            // 从本地存储获取投诉数据
-            const complaints = JSON.parse(localStorage.getItem('complaints')) || [];
-            
-            // 如果没有数据，创建一些模拟数据
-            if (complaints.length === 0) {
-                createMockData();
-                return;
+        async function initPageData() {
+            try {
+                // 导入Firebase函数
+                const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js");
+                
+                // 从Firebase Firestore获取投诉数据
+                const complaintsCol = collection(db, 'complaints');
+                const complaintsSnapshot = await getDocs(complaintsCol);
+                const complaints = complaintsSnapshot.docs.map(doc => doc.data());
+                
+                if (complaints.length > 0) {
+                    // 更新统计数据
+                    updateStatistics(complaints);
+                    
+                    // 渲染图表
+                    renderCharts(complaints);
+                    
+                    // 显示最近投诉
+                    displayRecentComplaints(complaints);
+                } else {
+                    // 如果没有数据，创建一些模拟数据
+                    createMockData();
+                }
+            } catch (error) {
+                console.error('获取投诉数据失败:', error);
+                // 从本地存储获取投诉数据作为备份
+                const complaints = JSON.parse(localStorage.getItem('complaints')) || [];
+                
+                // 如果没有数据，创建一些模拟数据
+                if (complaints.length === 0) {
+                    createMockData();
+                    return;
+                }
+                
+                // 更新统计数据
+                updateStatistics(complaints);
+                
+                // 渲染图表
+                renderCharts(complaints);
+                
+                // 显示最近投诉
+                displayRecentComplaints(complaints);
             }
-            
-            // 更新统计数据
-            updateStatistics(complaints);
-            
-            // 渲染图表
-            renderCharts(complaints);
-            
-            // 显示最近投诉
-            displayRecentComplaints(complaints);
         }
         
         // 创建模拟数据
-        function createMockData() {
+        async function createMockData() {
+            // 导入Firebase函数
+            const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js");
+            
             const now = new Date();
             const mockComplaints = [
                 {
@@ -646,8 +690,17 @@
                 }
             ];
             
-            // 保存模拟数据到本地存储
-            localStorage.setItem('complaints', JSON.stringify(mockComplaints));
+            try {
+                // 保存模拟数据到Firebase Firestore
+                for (const complaint of mockComplaints) {
+                    await setDoc(doc(db, 'complaints', complaint.id), complaint);
+                }
+                console.log('模拟数据保存成功');
+            } catch (error) {
+                console.error('保存模拟数据失败:', error);
+                // 保存到本地存储作为备份
+                localStorage.setItem('complaints', JSON.stringify(mockComplaints));
+            }
             
             // 更新统计数据
             updateStatistics(mockComplaints);
@@ -866,9 +919,9 @@
         }
         
         // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             if (checkUserLogin()) {
-                initPageData();
+                await initPageData();
             }
         });
     </script>
